@@ -1,0 +1,5 @@
+user name: 15
+folder: C:\repos\unity\ferran\ManusSteamVR\HandInteractions\Build\exp3_calibration\exp_results
+block order: 0 = BlockOrder1_Keyboard_Slider
+session start: 2022-02-08_15-38-30
+session end: 2022-02-08_15-48-09

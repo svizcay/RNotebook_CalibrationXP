@@ -1,0 +1,5 @@
+Block,TrialInBlock,Trial,CalibrationMethod,Dummy,Durtaion,SensationThreshold,DiscomfortThreshold,Comfortability,Completed,Attempts,Skipped,RespTime
+0,0,0,Keyboard,0,0,0,0,0,True,1,False,60.37823
+1,0,1,Slider,0,0,0,0,0,True,1,False,36.27284
+2,0,2,Keyboard,0,0,0,0,0,True,1,False,46.8651
+3,0,3,Slider,0,0,0,0,0,True,1,False,38.06308

@@ -1,0 +1,60 @@
+---
+title: "Calibration Experiment"
+output: html_notebook
+---
+[comment]: <> (Markdown Section)
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+```{r}
+install.packages(c('tibble', 'dplyr', 'readr'))
+```
+
+```{r}
+sprintf("current working directory = %s", getwd())
+results_directory = "results"
+questionnaire_raw_filename = paste(results_directory, "0_PostQuestionnaire.csv", sep="/")
+questionnaire_raw <- read.csv(questionnaire_raw_filename)
+
+```
+
+
+```{r}
+keyboard_columns = c(
+  '1_Complex_Keyboard',
+  '2_Easy_Keyboard',
+  '3_learn_quickly_Keyboard',
+  '4_Cumbersome_Keyboard',
+  '5_Confident_Keyboard',
+  '6_Learn_Lots_Keyboard',
+  '7_Fast_Keyboard',
+  '8_Accurate_Keyboard'
+)
+
+
+slider_columns = c(
+  '1_Complex_Slider',
+  '2_Easy_Slider',
+  '3_learn_quickly_Slider',
+  '4_Cumbersome_Slider',
+  '5_Confident_Slider',
+  '6_Learn_Lots_Slider',
+  '7_Fast_Slider',
+  '8_Accurate_Slider'
+)
+
+positivity = c(
+    '1_Complex' = F,
+    '2_Easy' = T,
+    '3_learn_quickly' = T,
+    '4_Cumbersome' = F,
+    '5_Confident' = T,
+    '6_Learn_Lots' = F,
+    '7_Fast' = T,
+    '8_Accurate' = T
+)
+
+print(positivity["1_Complex"])
+
+```
+

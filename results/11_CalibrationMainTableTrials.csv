@@ -1,0 +1,6 @@
+sep=;
+condition;trial;sensation;discomfort;dynamicRange;firstContact-endTrial-elapsedTime;firstContact-lastContact-elapsedTime;firstContact-lastSensation-elapsedTime
+Keyboard;1;1.5;2.1;0.6000001;128.5069;117.3793;124.5647
+Slider;2;1.6;2.1;0.5000001;77.67743;73.29062;76.28986
+Keyboard;3;1.6;2.4;0.8000001;63.66043;58.87442;61.68356
+Slider;4;1.7;2.6;0.9000001;69.33713;66.98245;68.22604

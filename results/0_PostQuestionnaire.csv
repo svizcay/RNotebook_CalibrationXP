@@ -1,0 +1,16 @@
+id,age,gender,hand,vr experience,haptics experience,electro experience,1_Complex_Keyboard,1_Complex_Slider,2_Easy_Keyboard,2_Easy_Slider,3_learn_quickly_Keyboard,3_learn_quickly_Slider,4_Cumbersome_Keyboard,4_Cumbersome_Slider,5_Confident_Keyboard,5_Confident_Slider,6_Learn_Lots_Keyboard,6_Learn_Lots_Slider,7_Fast_Keyboard,7_Fast_Slider,8_Accurate_Keyboard,8_Accurate_Slider
+1,-,female,right,1,0,0,0,0,4,4,4,4,0,0,3,3,1,1,3,3,3,4
+2,25,female,right,1,1,0,1,0,3,4,3,4,0,0,3,3,0,0,4,4,4,4
+3,28,male,right,1,1,0,0,0,4,4,4,4,1,0,3,4,0,0,3,3,3,4
+4,32,male,right,1,1,1,1,3,4,0,4,4,1,3,4,4,1,1,3,3,1,4
+5,25,female,right,1,0,0,1,1,3,3,4,3,1,1,3,2,1,1,3,4,4,3
+6,22,female,right,1,1,0,3,1,1,3,2,3,3,1,1,3,3,1,2,3,3,3
+7,24,male,right,1,1,0,1,1,3,3,3,4,3,1,3,3,1,1,3,3,4,3
+8,23,female,right,1,1,1,0,0,3,4,4,4,2,1,4,3,0,0,3,4,4,3
+9,30,male,right,1,0,1,0,0,4,4,4,4,0,0,4,4,0,0,3,4,4,4
+10,52,male,right,1,1,0,2,0,2,4,3,4,2,0,3,4,1,0,3,4,4,4
+11,24,female,right,1,1,0,0,0,4,4,4,4,0,0,4,4,0,0,4,4,3,3
+12,25,female,right,1,1,0,1,0,3,3,3,4,1,1,3,3,0,0,3,4,4,3
+13,26,male,right,1,1,1,0,0,4,4,4,3,0,0,4,4,0,0,3,4,4,3
+14,25,female,left,1,1,1,1,1,3,3,3,3,0,0,3,3,1,1,3,4,4,4
+15,25,male,left,1,0,1,0,0,3,4,4,4,1,0,4,3,0,0,4,4,4,3
