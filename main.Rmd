@@ -3,13 +3,13 @@ title: "Calibration Experiment"
 output: html_notebook
 ---
 [comment]: <> (Markdown Section)
-This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
-
-Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+Download and import dependencies.
 ```{r}
 install.packages(c('tibble', 'dplyr', 'readr'))
-```
 
+library(tidyverse)
+```
+Set up working directory and read raw input files
 ```{r}
 sprintf("current working directory = %s", getwd())
 results_directory = "results"
@@ -17,7 +17,11 @@ questionnaire_raw_filename = paste(results_directory, "0_PostQuestionnaire.csv",
 questionnaire_raw <- read.csv(questionnaire_raw_filename)
 
 ```
+```{r}
+View(questionnaire_raw)
+```
 
+For the questionnaire dataframe, add two new columns having the SUS score for the keyboard and for the slider methods. This is done per row (participant)
 
 ```{r}
 keyboard_columns = c(
@@ -54,7 +58,7 @@ positivity = c(
     '8_Accurate' = T
 )
 
-print(positivity["1_Complex"])
+
 
 ```
 

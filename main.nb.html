@@ -1797,8 +1797,7 @@ summary {
 
 
 <!-- rnb-text-begin -->
-<p>This is an <a href="http://rmarkdown.rstudio.com">R Markdown</a> Notebook. When you execute code within the notebook, the results appear beneath the code.</p>
-<p>Try executing this chunk by clicking the <em>Run</em> button within the chunk or by placing your cursor inside it and pressing <em>Ctrl+Shift+Enter</em>.</p>
+<p>Download and import dependencies.</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuaW5zdGFsbC5wYWNrYWdlcyhjKCd0aWJibGUnLCAnZHBseXInLCAncmVhZHInKSlcbmBgYCJ9 -->
@@ -1807,19 +1806,38 @@ summary {
 <!-- rnb-output-begin eyJkYXRhIjoiRXJyb3IgaW4gaW5zdGFsbC5wYWNrYWdlcyA6IFVwZGF0aW5nIGxvYWRlZCBwYWNrYWdlc1xuIn0= -->
 <pre><code>Error in install.packages : Updating loaded packages</code></pre>
 <!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxubGlicmFyeSh0aWR5dmVyc2UpXG5gYGAifQ== -->
+<pre class="r"><code>library(tidyverse)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiRXJyb3I6IHBhY2thZ2Ugb3IgbmFtZXNwYWNlIGxvYWQgZmFpbGVkIGZvciDigJh0aWR5dmVyc2XigJkgaW4gbG9hZE5hbWVzcGFjZShpLCBjKGxpYi5sb2MsIC5saWJQYXRocygpKSwgdmVyc2lvbkNoZWNrID0gdklbW2ldXSk6XG4gbmFtZXNwYWNlIOKAmHJsYW5n4oCZIDAuNC44IGlzIGFscmVhZHkgbG9hZGVkLCBidXQgPj0gMC40LjEwIGlzIHJlcXVpcmVkXG4ifQ== -->
+<pre><code>Error: package or namespace load failed for ‘tidyverse’ in loadNamespace(i, c(lib.loc, .libPaths()), versionCheck = vI[[i]]):
+ namespace ‘rlang’ 0.4.8 is already loaded, but &gt;= 0.4.10 is required</code></pre>
+<!-- rnb-output-end -->
 <!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p>Set up working directory and read raw input files</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
-<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3ByaW50ZihcImN1cnJlbnQgd29ya2luZyBkaXJlY3RvcnkgPSAlc1wiLCBnZXR3ZCgpKVxucmVzdWx0c19kaXJlY3RvcnkgPSBcInJlc3VsdHNcIlxucXVlc3Rpb25uYWlyZV9yYXdfZmlsZW5hbWUgPSBwYXN0ZShyZXN1bHRzX2RpcmVjdG9yeSwgXCIwX1Bvc3RRdWVzdGlvbm5haXJlLmNzdlwiLCBzZXA9XCIvXCIpXG5xdWVzdGlvbm5haXJlX3JhdyA8LSByZWFkLmNzdihxdWVzdGlvbm5haXJlX3Jhd19maWxlbmFtZSlcblxuYGBgIn0= -->
-<pre class="r"><code>sprintf(&quot;current working directory = %s&quot;, getwd())
-results_directory = &quot;results&quot;
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuc3ByaW50ZihcImN1cnJlbnQgd29ya2luZyBkaXJlY3RvcnkgPSAlc1wiLCBnZXR3ZCgpKVxuYGBgIn0= -->
+<pre class="r"><code>sprintf(&quot;current working directory = %s&quot;, getwd())</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-output-begin eyJkYXRhIjoiWzFdIFwiY3VycmVudCB3b3JraW5nIGRpcmVjdG9yeSA9IEM6L3JlcG9zL3JOb3RlYm9va3MvY2FsaWJyYXRpb25YUFwiXG4ifQ== -->
+<pre><code>[1] &quot;current working directory = C:/repos/rNotebooks/calibrationXP&quot;</code></pre>
+<!-- rnb-output-end -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxucmVzdWx0c19kaXJlY3RvcnkgPSBcInJlc3VsdHNcIlxucXVlc3Rpb25uYWlyZV9yYXdfZmlsZW5hbWUgPSBwYXN0ZShyZXN1bHRzX2RpcmVjdG9yeSwgXCIwX1Bvc3RRdWVzdGlvbm5haXJlLmNzdlwiLCBzZXA9XCIvXCIpXG5xdWVzdGlvbm5haXJlX3JhdyA8LSByZWFkLmNzdihxdWVzdGlvbm5haXJlX3Jhd19maWxlbmFtZSlcblxuYGBgIn0= -->
+<pre class="r"><code>results_directory = &quot;results&quot;
 questionnaire_raw_filename = paste(results_directory, &quot;0_PostQuestionnaire.csv&quot;, sep=&quot;/&quot;)
 questionnaire_raw &lt;- read.csv(questionnaire_raw_filename)
 </code></pre>
 <!-- rnb-source-end -->
 <!-- rnb-chunk-end -->
+<!-- rnb-chunk-begin -->
+<!-- rnb-source-begin eyJkYXRhIjoiYGBgclxuVmlldyhxdWVzdGlvbm5haXJlX3JhdylcbmBgYCJ9 -->
+<pre class="r"><code>View(questionnaire_raw)</code></pre>
+<!-- rnb-source-end -->
+<!-- rnb-chunk-end -->
 <!-- rnb-text-begin -->
+<p>For the questionnaire dataframe, add two new columns having the SUS score for the keyboard and for the slider methods. This is done per row (participant)</p>
 <!-- rnb-text-end -->
 <!-- rnb-chunk-begin -->
 <!-- rnb-source-begin eyJkYXRhIjoiYGBgclxua2V5Ym9hcmRfY29sdW1ucyA9IGMoXG4gICcxX0NvbXBsZXhfS2V5Ym9hcmQnLFxuICAnMl9FYXN5X0tleWJvYXJkJyxcbiAgJzNfbGVhcm5fcXVpY2tseV9LZXlib2FyZCcsXG4gICc0X0N1bWJlcnNvbWVfS2V5Ym9hcmQnLFxuICAnNV9Db25maWRlbnRfS2V5Ym9hcmQnLFxuICAnNl9MZWFybl9Mb3RzX0tleWJvYXJkJyxcbiAgJzdfRmFzdF9LZXlib2FyZCcsXG4gICc4X0FjY3VyYXRlX0tleWJvYXJkJ1xuKVxuXG5cbnNsaWRlcl9jb2x1bW5zID0gYyhcbiAgJzFfQ29tcGxleF9TbGlkZXInLFxuICAnMl9FYXN5X1NsaWRlcicsXG4gICczX2xlYXJuX3F1aWNrbHlfU2xpZGVyJyxcbiAgJzRfQ3VtYmVyc29tZV9TbGlkZXInLFxuICAnNV9Db25maWRlbnRfU2xpZGVyJyxcbiAgJzZfTGVhcm5fTG90c19TbGlkZXInLFxuICAnN19GYXN0X1NsaWRlcicsXG4gICc4X0FjY3VyYXRlX1NsaWRlcidcbilcblxucG9zaXRpdml0eSA9IGMoXG4gICAgJzFfQ29tcGxleCcgPSBGLFxuICAgICcyX0Vhc3knID0gVCxcbiAgICAnM19sZWFybl9xdWlja2x5JyA9IFQsXG4gICAgJzRfQ3VtYmVyc29tZScgPSBGLFxuICAgICc1X0NvbmZpZGVudCcgPSBULFxuICAgICc2X0xlYXJuX0xvdHMnID0gRixcbiAgICAnN19GYXN0JyA9IFQsXG4gICAgJzhfQWNjdXJhdGUnID0gVFxuKVxuXG5wcmludChwb3NpdGl2aXR5W1wiMV9Db21wbGV4XCJdKVxuYGBgIn0= -->
@@ -1867,7 +1885,7 @@ print(positivity[&quot;1_Complex&quot;])</code></pre>
 <!-- rnb-text-begin -->
 <!-- rnb-text-end -->
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkNhbGlicmF0aW9uIEV4cGVyaW1lbnQiDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KW2NvbW1lbnRdOiA8PiAoTWFya2Rvd24gU2VjdGlvbikNClRoaXMgaXMgYW4gW1IgTWFya2Rvd25dKGh0dHA6Ly9ybWFya2Rvd24ucnN0dWRpby5jb20pIE5vdGVib29rLiBXaGVuIHlvdSBleGVjdXRlIGNvZGUgd2l0aGluIHRoZSBub3RlYm9vaywgdGhlIHJlc3VsdHMgYXBwZWFyIGJlbmVhdGggdGhlIGNvZGUuIA0KDQpUcnkgZXhlY3V0aW5nIHRoaXMgY2h1bmsgYnkgY2xpY2tpbmcgdGhlICpSdW4qIGJ1dHRvbiB3aXRoaW4gdGhlIGNodW5rIG9yIGJ5IHBsYWNpbmcgeW91ciBjdXJzb3IgaW5zaWRlIGl0IGFuZCBwcmVzc2luZyAqQ3RybCtTaGlmdCtFbnRlciouIA0KYGBge3J9DQppbnN0YWxsLnBhY2thZ2VzKGMoJ3RpYmJsZScsICdkcGx5cicsICdyZWFkcicpKQ0KYGBgDQoNCmBgYHtyfQ0Kc3ByaW50ZigiY3VycmVudCB3b3JraW5nIGRpcmVjdG9yeSA9ICVzIiwgZ2V0d2QoKSkNCnJlc3VsdHNfZGlyZWN0b3J5ID0gInJlc3VsdHMiDQpxdWVzdGlvbm5haXJlX3Jhd19maWxlbmFtZSA9IHBhc3RlKHJlc3VsdHNfZGlyZWN0b3J5LCAiMF9Qb3N0UXVlc3Rpb25uYWlyZS5jc3YiLCBzZXA9Ii8iKQ0KcXVlc3Rpb25uYWlyZV9yYXcgPC0gcmVhZC5jc3YocXVlc3Rpb25uYWlyZV9yYXdfZmlsZW5hbWUpDQoNCmBgYA0KDQoNCmBgYHtyfQ0Ka2V5Ym9hcmRfY29sdW1ucyA9IGMoDQogICcxX0NvbXBsZXhfS2V5Ym9hcmQnLA0KICAnMl9FYXN5X0tleWJvYXJkJywNCiAgJzNfbGVhcm5fcXVpY2tseV9LZXlib2FyZCcsDQogICc0X0N1bWJlcnNvbWVfS2V5Ym9hcmQnLA0KICAnNV9Db25maWRlbnRfS2V5Ym9hcmQnLA0KICAnNl9MZWFybl9Mb3RzX0tleWJvYXJkJywNCiAgJzdfRmFzdF9LZXlib2FyZCcsDQogICc4X0FjY3VyYXRlX0tleWJvYXJkJw0KKQ0KDQoNCnNsaWRlcl9jb2x1bW5zID0gYygNCiAgJzFfQ29tcGxleF9TbGlkZXInLA0KICAnMl9FYXN5X1NsaWRlcicsDQogICczX2xlYXJuX3F1aWNrbHlfU2xpZGVyJywNCiAgJzRfQ3VtYmVyc29tZV9TbGlkZXInLA0KICAnNV9Db25maWRlbnRfU2xpZGVyJywNCiAgJzZfTGVhcm5fTG90c19TbGlkZXInLA0KICAnN19GYXN0X1NsaWRlcicsDQogICc4X0FjY3VyYXRlX1NsaWRlcicNCikNCg0KcG9zaXRpdml0eSA9IGMoDQogICAgJzFfQ29tcGxleCcgPSBGLA0KICAgICcyX0Vhc3knID0gVCwNCiAgICAnM19sZWFybl9xdWlja2x5JyA9IFQsDQogICAgJzRfQ3VtYmVyc29tZScgPSBGLA0KICAgICc1X0NvbmZpZGVudCcgPSBULA0KICAgICc2X0xlYXJuX0xvdHMnID0gRiwNCiAgICAnN19GYXN0JyA9IFQsDQogICAgJzhfQWNjdXJhdGUnID0gVA0KKQ0KDQpwcmludChwb3NpdGl2aXR5WyIxX0NvbXBsZXgiXSkNCg0KYGBgDQoNCg==</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkNhbGlicmF0aW9uIEV4cGVyaW1lbnQiDQpvdXRwdXQ6IGh0bWxfbm90ZWJvb2sNCi0tLQ0KW2NvbW1lbnRdOiA8PiAoTWFya2Rvd24gU2VjdGlvbikNCkRvd25sb2FkIGFuZCBpbXBvcnQgZGVwZW5kZW5jaWVzLg0KYGBge3J9DQppbnN0YWxsLnBhY2thZ2VzKGMoJ3RpYmJsZScsICdkcGx5cicsICdyZWFkcicpKQ0KDQpsaWJyYXJ5KHRpZHl2ZXJzZSkNCmBgYA0KU2V0IHVwIHdvcmtpbmcgZGlyZWN0b3J5IGFuZCByZWFkIHJhdyBpbnB1dCBmaWxlcw0KYGBge3J9DQpzcHJpbnRmKCJjdXJyZW50IHdvcmtpbmcgZGlyZWN0b3J5ID0gJXMiLCBnZXR3ZCgpKQ0KcmVzdWx0c19kaXJlY3RvcnkgPSAicmVzdWx0cyINCnF1ZXN0aW9ubmFpcmVfcmF3X2ZpbGVuYW1lID0gcGFzdGUocmVzdWx0c19kaXJlY3RvcnksICIwX1Bvc3RRdWVzdGlvbm5haXJlLmNzdiIsIHNlcD0iLyIpDQpxdWVzdGlvbm5haXJlX3JhdyA8LSByZWFkLmNzdihxdWVzdGlvbm5haXJlX3Jhd19maWxlbmFtZSkNCg0KYGBgDQpgYGB7cn0NClZpZXcocXVlc3Rpb25uYWlyZV9yYXcpDQpgYGANCg0KRm9yIHRoZSBxdWVzdGlvbm5haXJlIGRhdGFmcmFtZSwgYWRkIHR3byBuZXcgY29sdW1ucyBoYXZpbmcgdGhlIFNVUyBzY29yZSBmb3IgdGhlIGtleWJvYXJkIGFuZCBmb3IgdGhlIHNsaWRlciBtZXRob2RzLiBUaGlzIGlzIGRvbmUgcGVyIHJvdyAocGFydGljaXBhbnQpDQoNCmBgYHtyfQ0Ka2V5Ym9hcmRfY29sdW1ucyA9IGMoDQogICcxX0NvbXBsZXhfS2V5Ym9hcmQnLA0KICAnMl9FYXN5X0tleWJvYXJkJywNCiAgJzNfbGVhcm5fcXVpY2tseV9LZXlib2FyZCcsDQogICc0X0N1bWJlcnNvbWVfS2V5Ym9hcmQnLA0KICAnNV9Db25maWRlbnRfS2V5Ym9hcmQnLA0KICAnNl9MZWFybl9Mb3RzX0tleWJvYXJkJywNCiAgJzdfRmFzdF9LZXlib2FyZCcsDQogICc4X0FjY3VyYXRlX0tleWJvYXJkJw0KKQ0KDQoNCnNsaWRlcl9jb2x1bW5zID0gYygNCiAgJzFfQ29tcGxleF9TbGlkZXInLA0KICAnMl9FYXN5X1NsaWRlcicsDQogICczX2xlYXJuX3F1aWNrbHlfU2xpZGVyJywNCiAgJzRfQ3VtYmVyc29tZV9TbGlkZXInLA0KICAnNV9Db25maWRlbnRfU2xpZGVyJywNCiAgJzZfTGVhcm5fTG90c19TbGlkZXInLA0KICAnN19GYXN0X1NsaWRlcicsDQogICc4X0FjY3VyYXRlX1NsaWRlcicNCikNCg0KcG9zaXRpdml0eSA9IGMoDQogICAgJzFfQ29tcGxleCcgPSBGLA0KICAgICcyX0Vhc3knID0gVCwNCiAgICAnM19sZWFybl9xdWlja2x5JyA9IFQsDQogICAgJzRfQ3VtYmVyc29tZScgPSBGLA0KICAgICc1X0NvbmZpZGVudCcgPSBULA0KICAgICc2X0xlYXJuX0xvdHMnID0gRiwNCiAgICAnN19GYXN0JyA9IFQsDQogICAgJzhfQWNjdXJhdGUnID0gVA0KKQ0KDQoNCg0KYGBgDQoNCg==</div>
 
 
 
