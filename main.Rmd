@@ -2,63 +2,270 @@
 title: "Calibration Experiment"
 output: html_notebook
 ---
-[comment]: <> (Markdown Section)
+[comment]: <> (Markdown Section. R code un {chunks})
 Download and import dependencies.
-```{r}
-install.packages(c('tibble', 'dplyr', 'readr'))
+```{r include=FALSE, echo=FALSE}
+if(!require(psych)){install.packages('psych')} # for describe()
+library(psych)
 
+# plot using a grid
+if(!require(grid)){install.packages('grid')} # for describe()
+library(grid)
+
+if(!require(gridExtra)){install.packages('gridExtra')} # for describe()
+library(gridExtra)
+
+if(!require(tidyverse)){install.packages('tidyverse')}
 library(tidyverse)
 ```
+
 Set up working directory and read raw input files
 ```{r}
 sprintf("current working directory = %s", getwd())
 results_directory = "results"
 questionnaire_raw_filename = paste(results_directory, "0_PostQuestionnaire.csv", sep="/")
-questionnaire_raw <- read.csv(questionnaire_raw_filename)
+questionnaire_raw <- read.csv(questionnaire_raw_filename, na.strings = c("-"))
+
+# note:
+# R renamed column names starting with a number to X<number>
+```
+
+Let's declare the name of the columns and whether they are a positive or negative question
+```{r}
+keyboard_columns = c(
+  'X1_Complex_Keyboard',
+  'X2_Easy_Keyboard',
+  'X3_learn_quickly_Keyboard',
+  'X4_Cumbersome_Keyboard',
+  'X5_Confident_Keyboard',
+  'X6_Learn_Lots_Keyboard',
+  'X7_Fast_Keyboard',
+  'X8_Accurate_Keyboard'
+)
+
+
+slider_columns = c(
+  'X1_Complex_Slider',
+  'X2_Easy_Slider',
+  'X3_learn_quickly_Slider',
+  'X4_Cumbersome_Slider',
+  'X5_Confident_Slider',
+  'X6_Learn_Lots_Slider',
+  'X7_Fast_Slider',
+  'X8_Accurate_Slider'
+)
+
+positivity = c(
+    'X1_Complex' = F,
+    'X2_Easy' = T,
+    'X3_learn_quickly' = T,
+    'X4_Cumbersome' = F,
+    'X5_Confident' = T,
+    'X6_Learn_Lots' = F,
+    'X7_Fast' = T,
+    'X8_Accurate' = T
+)
+
+get_base_name <- function(col_name)
+{
+  print(col_name)
+  print(typeof(col_name))
+  base = substr(col_name, 1, rfind(col_name, '_')-1)
+  print(base)
+  return(base)
+}
+
+get_base_name_cols <- function(col_names)
+{
+  return(lapply(col_names, get_base_name))
+}
+```
+
+Let's create a dataframe with columns: id, question_1, ..., question_n, method
+```{r}
+ids = seq.int(nrow(questionnaire_raw))
+
+keyboard_answers <- questionnaire_raw %>%
+  select(ends_with("Keyboard"))
+
+keyboard_answers <- keyboard_answers %>%
+  #rename_with(get_base_name_cols)
+  rename_with(get_base_name_cols)
+
+get_base_name("X1_Complex_Keyboard")
 
 ```
+
+
+
 ```{r}
-View(questionnaire_raw)
+#View(questionnaire_raw)
+head(questionnaire_raw)
+
+
+
 ```
 
 For the questionnaire dataframe, add two new columns having the SUS score for the keyboard and for the slider methods. This is done per row (participant)
 
 ```{r}
 keyboard_columns = c(
-  '1_Complex_Keyboard',
-  '2_Easy_Keyboard',
-  '3_learn_quickly_Keyboard',
-  '4_Cumbersome_Keyboard',
-  '5_Confident_Keyboard',
-  '6_Learn_Lots_Keyboard',
-  '7_Fast_Keyboard',
-  '8_Accurate_Keyboard'
+  'X1_Complex_Keyboard',
+  'X2_Easy_Keyboard',
+  'X3_learn_quickly_Keyboard',
+  'X4_Cumbersome_Keyboard',
+  'X5_Confident_Keyboard',
+  'X6_Learn_Lots_Keyboard',
+  'X7_Fast_Keyboard',
+  'X8_Accurate_Keyboard'
 )
 
 
 slider_columns = c(
-  '1_Complex_Slider',
-  '2_Easy_Slider',
-  '3_learn_quickly_Slider',
-  '4_Cumbersome_Slider',
-  '5_Confident_Slider',
-  '6_Learn_Lots_Slider',
-  '7_Fast_Slider',
-  '8_Accurate_Slider'
+  'X1_Complex_Slider',
+  'X2_Easy_Slider',
+  'X3_learn_quickly_Slider',
+  'X4_Cumbersome_Slider',
+  'X5_Confident_Slider',
+  'X6_Learn_Lots_Slider',
+  'X7_Fast_Slider',
+  'X8_Accurate_Slider'
 )
 
 positivity = c(
-    '1_Complex' = F,
-    '2_Easy' = T,
-    '3_learn_quickly' = T,
-    '4_Cumbersome' = F,
-    '5_Confident' = T,
-    '6_Learn_Lots' = F,
-    '7_Fast' = T,
-    '8_Accurate' = T
+    'X1_Complex' = F,
+    'X2_Easy' = T,
+    'X3_learn_quickly' = T,
+    'X4_Cumbersome' = F,
+    'X5_Confident' = T,
+    'X6_Learn_Lots' = F,
+    'X7_Fast' = T,
+    'X8_Accurate' = T
 )
 
+# 5 positive questions and 3 negative
+# max score 8 x 4 = 32 -> scale_factor = 3.125
+scale_factor = 3.125
+
+# find the position of the last '_' character
+# so annoying there is no basic rfind in R
+rfind <- function(s, char) { rev(grep(char, unlist(strsplit(s, NULL)), fixed=T))[1]}
+
+# custom function to calculate SUS score
+get_sus <- function(entry, columns_labels, positivity, scale_factor)
+{
+  accum = 0
+  # drop the last part of the column name
+  for (col_name in columns_labels)
+  {
+    
+    base = substr(col_name, 1, rfind(col_name, '_')-1)
+    print(col_name)
+    print(positivity)
+    print(positivity[base])
+    print(entry)
+    #score = if(positivity[base]) row[col_name] else (4 - row[col_name])
+    score = if(positivity[base]) entry$col_name else (4 - entry$col_name)
+    accum = accum + score
+  }
+  return(accum * scale_factor)
+}
+
+# convert score based on positivity
+for (col_name in keyboard_columns)
+{
+  print(col_name)
+  base = substr(col_name, 1, rfind(col_name, '_')-1)
+  new_column_name = paste(col_name, "SUS", sep="_")
+  #questionnaire_raw %>%
+    #mutate_(new_column_name = if_else(positivity[base], (!!as.name(col_name)), 4-(!!as.name(col_name))))
+    #mutate_(new_column_name = if_else(positivity[base], .data[[col_name]], 4-.data[[col_name]]))
+  questionnaire_raw[[new_column_name]] <- if(positivity[base]) questionnaire_raw[[col_name]] else (4 - questionnaire_raw[[col_name]])
+    #add_column(test = if_else(positivity[base], col_name, 4-col_name))
+}
+
+# 
+# questionnaire_raw %>%
+#   rowwise() %>%
+#   do (row = as_data_frame(.))
+#   mutate(
+#     KeyboardSUS = get_sus(row, keyboard_columns, positivity, scale_factor)
+#   )
 
 
+```
+
+Analysis of In-Experiment Measured Data (dynamic range, elapsed time)
+
+```{r include=FALSE, echo=FALSE}
+input_files <- list.files(
+  path = results_directory,
+  pattern = "*CalibrationMainTableTrials.csv",
+  full.names = TRUE)
+
+first_file <- TRUE
+for (input_file in input_files)
+{
+  #print(input_file)
+  first_index <- str_locate(input_file, "/")[1]
+  last_index <- str_locate(input_file, "_")[1]
+  participant_id <- strtoi(str_sub(input_file, first_index+1, last_index-1))
+  # add participant id and add block order info
+  partial_df <- read_delim(input_file, delim=';', skip=1, show_col_types = FALSE) %>%
+    add_column(participant = participant_id) %>%
+    mutate(repetition = if_else(trial == 1 | trial == 2, 1, 2)) %>%
+    mutate(first = if_else(trial == 1 | trial == 3, TRUE, FALSE))
+  
+  if (first_file)
+  {
+    measured_data <- partial_df
+    first_file <- FALSE
+  } else {
+    measured_data <- bind_rows(measured_data, partial_df)
+  }
+}
+
+measured_data <- measured_data %>%
+  rename(
+    firstContactEndTrialElapsed = `firstContact-endTrial-elapsedTime`,
+    firstContactLastContactElapsed = `firstContact-lastContact-elapsedTime`,
+    firstContactLastSensationElapsed = `firstContact-lastSensation-elapsedTime`,)
+measured_data$condition <- factor(measured_data$condition)
+
+rm(partial_df)
+```
+
+Let's describe the data
+```{r}
+str(measured_data)
+```
+```{r}
+measured_data %>%
+  select(sensation, discomfort, dynamicRange, firstContactEndTrialElapsed, firstContactLastContactElapsed, firstContactLastSensationElapsed) %>%
+  describe()
+#describe(measured_data)
+```
+
+
+let's make a histogram of the measured variables
+```{r}
+p1 <- ggplot(measured_data, aes(sensation)) + geom_histogram()
+p2 <- ggplot(measured_data, aes(discomfort)) + geom_histogram()
+p3 <- ggplot(measured_data, aes(dynamicRange)) + geom_histogram()
+p4 <- ggplot(measured_data, aes(firstContactLastContactElapsed)) + geom_histogram()
+p5 <- ggplot(measured_data, aes(firstContactLastSensationElapsed)) + geom_histogram()
+p6 <- ggplot(measured_data, aes(firstContactEndTrialElapsed)) + geom_histogram()
+#p2<-ggplot(simulatedData, aes(d)) +
+#  geom_histogram(binwidth = 4)
+#p3<-qplot(simulatedData$d,geom="boxplot")
+#p4<-ggplot(simulatedData, aes(sample = d)) + stat_qq() + stat_qq_line()
+
+#grid.arrange(p1, p2, p3, p4)
+#grid.arrange(p1, p2, p3, p4, p5, p6, nrow=1)
+grid.arrange(p1, p2, p3, p4, p5, p6, nrow=2)
+
+
+#hist(measured_data$firstContactEndTrialElapsed)
+#boxplot(measured_data$`firstContact-endTrial-elapsedTime` ~ measured_data$condition)
 ```
 

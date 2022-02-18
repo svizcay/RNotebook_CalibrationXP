@@ -14,3 +14,4 @@ id,age,gender,hand,vr experience,haptics experience,electro experience,1_Complex
 13,26,male,right,1,1,1,0,0,4,4,4,3,0,0,4,4,0,0,3,4,4,3
 14,25,female,left,1,1,1,1,1,3,3,3,3,0,0,3,3,1,1,3,4,4,4
 15,25,male,left,1,0,1,0,0,3,4,4,4,1,0,4,3,0,0,4,4,4,3
+16,24,male,right,1,1,1,0,1,4,4,4,4,0,2,2,2,0,0,4,4,2,2
