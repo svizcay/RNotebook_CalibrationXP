@@ -268,4 +268,20 @@ grid.arrange(p1, p2, p3, p4, p5, p6, nrow=2)
 #hist(measured_data$firstContactEndTrialElapsed)
 #boxplot(measured_data$`firstContact-endTrial-elapsedTime` ~ measured_data$condition)
 ```
+Let's try to find the outliers
+```{r}
+nr_participants = n_distinct(measured_data$participant)
+
+for (id in 1: nr_participants)
+{
+  participant_data <- measured_data %>%
+  filter(participant == id)
+  #ggtitle(paste("participant", id))
+  p1 <- ggplot(participant_data, aes(firstContactEndTrialElapsed)) + geom_boxplot() + coord_flip()
+  p2 <- ggplot(participant_data, aes(x=trial, y=firstContactEndTrialElapsed)) + geom_point()
+  grid.arrange(p1, p2, nrow=1, top=textGrob(paste("participant ", id)))
+}
+
+
+```
 
