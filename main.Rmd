@@ -17,6 +17,16 @@ library(gridExtra)
 
 if(!require(tidyverse)){install.packages('tidyverse')}
 library(tidyverse)
+
+
+# to find what's the data distribution
+if(!require(fitdistrplus)){install.packages('fitdistrplus')}
+library(fitdistrplus)
+if(!require(logspline)){install.packages('logspline')}
+library(logspline)
+
+if(!require(rstatix)){install.packages('rstatix')}
+library(rstatix)
 ```
 
 Set up working directory and read raw input files
@@ -284,4 +294,74 @@ for (id in 1: nr_participants)
 
 
 ```
+
+Identify data distribution
+
+```{r}
+descdist(measured_data$firstContactEndTrialElapsed, discrete = FALSE)
+```
+
+Let's plot some of the distributions against the observation
+```{r}
+scaled_data <- (measured_data$firstContactEndTrialElapsed - min(measured_data$firstContactEndTrialElapsed) + 0.001) / (max(measured_data$firstContactEndTrialElapsed) - min(measured_data$firstContactEndTrialElapsed) + 0.002)
+
+
+fit.beta <- fitdist(scaled_data, "beta")
+p1 <- plot(fit.beta)
+
+fit.gamma <- fitdist(measured_data$firstContactEndTrialElapsed, "gamma")
+p2 <- plot(fit.gamma)
+
+# r internal function is called lnorm and not lognormal (stats package)
+fit.lognormal <- fitdist(measured_data$firstContactEndTrialElapsed, "lnorm")
+p3 <- plot(fit.lognormal)
+
+p1
+
+p2
+
+p3
+```
+Data follows some lognormal distribution
+let's transform the data
+
+```{r}
+measured_data <- measured_data %>%
+    #add_column(logFirstContactEndTrialElapsed = log10(.$firstContactEndTrialElapsed))
+    mutate(logFirstContactEndTrialElapsed = log10(firstContactEndTrialElapsed))
+
+
+p1 <- ggplot(measured_data, aes(logFirstContactEndTrialElapsed)) + geom_histogram()
+plot(p1)
+
+shapiro_test(measured_data$logFirstContactEndTrialElapsed) # 0.95 -> data is normal
+
+fit.normal <- fitdist(measured_data$logFirstContactEndTrialElapsed, "norm")
+p2 <- plot(fit.normal)
+
+p2
+
+
+```
+
+For now, let's not discard any trial yet and let's average the metrics per condition per participant
+
+```{r}
+grouped_data <-  measured_data %>%
+  group_by(participant, condition) %>%
+  summarise_at(vars(logFirstContactEndTrialElapsed), list(elapsedTime = mean))
+
+grouped_data_keyboard <- grouped_data %>%
+  filter(condition == "Keyboard")
+
+grouped_data_slider <- grouped_data %>%
+  filter(condition == "Slider")
+
+p1_global <- ggplot(grouped_data, aes(elapsedTime)) + geom_histogram()
+p1_keyboard <- ggplot(grouped_data_keyboard, aes(elapsedTime)) + geom_histogram()
+p1_slider <- ggplot(grouped_data_slider, aes(elapsedTime)) + geom_histogram()
+
+grid.arrange(p1_global, p1_keyboard, p1_slider, nrow=1)
+```
+
 
