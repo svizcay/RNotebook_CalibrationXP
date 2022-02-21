@@ -18,7 +18,7 @@ library(grid)
 if(!require(gridExtra)){install.packages('gridExtra')}
 library(gridExtra)
 
-# for paired plots
+# for paired plots and other ready plots
 if(!require(ggpubr)){install.packages('ggpubr')}
 library(ggpubr)
 
@@ -32,6 +32,7 @@ library(fitdistrplus)
 if(!require(logspline)){install.packages('logspline')}
 library(logspline)
 
+# for identify_outliers and others
 if(!require(rstatix)){install.packages('rstatix')}
 library(rstatix)
 
@@ -302,6 +303,16 @@ for (id in 1: nr_participants)
 
 
 ```
+Outliers and Extreme points
+```{r}
+# 4 outliers, one of them extreme.
+# this were obtained using all datapoints and not using a "within-participant" comparison.
+# 1, 15, 9 outliers
+# 2 extreme outlier
+measured_data_outliers <- identify_outliers(measured_data, variable="firstContactEndTrialElapsed")
+```
+
+
 
 Identify data distribution
 
@@ -373,6 +384,18 @@ p1_slider <- ggplot(grouped_data_slider, aes(logFirstContactEndTrialElapsed)) + 
 
 grid.arrange(p1_global, p1_keyboard, p1_slider, nrow=1)
 ```
+Let's plot the 3 distributions all together
+```{r}
+ggdensity(grouped_data,
+  x = "logFirstContactEndTrialElapsed", # variable of interest
+  add = "mean",# add vertical line for mean
+  rug = TRUE, # add "rugs" to display the density of the values along the axis
+  color = "condition", fill = "condition",
+  palette = c("#00AFBB", "#E7B800"))
+```
+
+
+
 Let's perform a T-test between the 2 conditions
 Paired T-Test expect the difference between the two observations to be normally distributed
 ```{r}
@@ -410,12 +433,22 @@ ggpaired(data = grouped_data, x = "condition" , y = "logFirstContactEndTrialElap
 ```
 
 
-What's the difference using pairwise.t.test to just t.test?
+
 ```{r}
+# What's the difference using pairwise.t.test to just t.test?
+# I think functions is used when we want to simulate multiple t-tests
+# this function performs a pooled sd t-test
+# after making EXPLICIT paired=TRUE in a "pairwise" t-test, we get the same result as t.test.
+# by inspecting the output, we can assume this function is mostly used for running multiple t-test
+# between pairs of variables (PAIRWISE is for the variables and not for 'repeated measures')
 pairwise.t.test(
-  grouped_data$logFirstContactEndTrialElapsed,
-  grouped_data$condition,
-  p.adjust.method="bonferroni")
+  grouped_data$logFirstContactEndTrialElapsed, # response vector
+  grouped_data$condition,#grouping vector
+  #p.adjust.method="bonferroni", # 0.094 (same as holm)
+  p.adjust.method="none",
+  paired=TRUE,
+  pool.sd=FALSE # we dont' want to assume sd is same for both conditions
+  )
 ```
 
 
