@@ -18,6 +18,10 @@ library(grid)
 if(!require(gridExtra)){install.packages('gridExtra')}
 library(gridExtra)
 
+# for paired plots
+if(!require(ggpubr)){install.packages('ggpubr')}
+library(ggpubr)
+
 if(!require(tidyverse)){install.packages('tidyverse')}
 library(tidyverse)
 
@@ -30,7 +34,6 @@ library(logspline)
 
 if(!require(rstatix)){install.packages('rstatix')}
 library(rstatix)
-
 
 ```
 
@@ -401,7 +404,9 @@ t.test(grouped_data_keyboard$logFirstContactEndTrialElapsed, grouped_data_slider
 ```
 Let's plot the distribution per condition
 ```{r}
-boxplot(grouped_data$logFirstContactEndTrialElapsed~grouped_data$condition)
+#boxplot(grouped_data$logFirstContactEndTrialElapsed~grouped_data$condition)
+ggpaired(data = grouped_data, x = "condition" , y = "logFirstContactEndTrialElapsed", id="participant", fill="condition")
+#grid.arrange(p1, p2, nrow=1)
 ```
 
 
