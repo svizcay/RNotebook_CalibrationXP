@@ -8,11 +8,14 @@ Download and import dependencies.
 if(!require(psych)){install.packages('psych')} # for describe()
 library(psych)
 
+if(!require(car)){install.packages('car')} # for qqPlot
+library(car)
+
 # plot using a grid
-if(!require(grid)){install.packages('grid')} # for describe()
+if(!require(grid)){install.packages('grid')}
 library(grid)
 
-if(!require(gridExtra)){install.packages('gridExtra')} # for describe()
+if(!require(gridExtra)){install.packages('gridExtra')}
 library(gridExtra)
 
 if(!require(tidyverse)){install.packages('tidyverse')}
@@ -27,6 +30,8 @@ library(logspline)
 
 if(!require(rstatix)){install.packages('rstatix')}
 library(rstatix)
+
+
 ```
 
 Set up working directory and read raw input files
@@ -372,10 +377,21 @@ difference_t_test = grouped_data_keyboard$logFirstContactEndTrialElapsed - group
 hist(difference_t_test)
 shapiro_test(difference_t_test) #0.6265 -> normal
 qq_data <- as.data.frame(difference_t_test)
-str(qq_data)
-p1<-ggplot(qq_data, aes(sample=difference_t_test)) + stat_qq() + stat_qq_line()
-p1
+#str(qq_data)
+#p1<-ggplot(qq_data, aes(sample=difference_t_test)) + stat_qq() + stat_qq_line()
+#p1
+
+# qqPlot from car package draws also surrounding area
+qqPlot(difference_t_test)
 ```
+
+```{r}
+# manual calculation of t-statistics
+m <- mean(difference_t_test)
+s <- sd(difference_t_test) # sample standard deviation
+t <- m / (s / sqrt(length(difference_t_test)))
+```
+
 
 
 ```{r}
@@ -383,6 +399,12 @@ p1
 # we got p-value 0.008
 t.test(grouped_data_keyboard$logFirstContactEndTrialElapsed, grouped_data_slider$logFirstContactEndTrialElapsed, paired = TRUE, alternative = "two.sided")
 ```
+Let's plot the distribution per condition
+```{r}
+boxplot(grouped_data$logFirstContactEndTrialElapsed~grouped_data$condition)
+```
+
+
 What's the difference using pairwise.t.test to just t.test?
 ```{r}
 pairwise.t.test(
