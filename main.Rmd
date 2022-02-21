@@ -349,7 +349,9 @@ For now, let's not discard any trial yet and let's average the metrics per condi
 ```{r}
 grouped_data <-  measured_data %>%
   group_by(participant, condition) %>%
-  summarise_at(vars(logFirstContactEndTrialElapsed), list(elapsedTime = mean))
+  summarise_at(
+    vars(firstContactEndTrialElapsed, logFirstContactEndTrialElapsed),
+    mean)
 
 grouped_data_keyboard <- grouped_data %>%
   filter(condition == "Keyboard")
@@ -357,11 +359,56 @@ grouped_data_keyboard <- grouped_data %>%
 grouped_data_slider <- grouped_data %>%
   filter(condition == "Slider")
 
-p1_global <- ggplot(grouped_data, aes(elapsedTime)) + geom_histogram()
-p1_keyboard <- ggplot(grouped_data_keyboard, aes(elapsedTime)) + geom_histogram()
-p1_slider <- ggplot(grouped_data_slider, aes(elapsedTime)) + geom_histogram()
+p1_global <- ggplot(grouped_data, aes(logFirstContactEndTrialElapsed)) + geom_histogram()
+p1_keyboard <- ggplot(grouped_data_keyboard, aes(logFirstContactEndTrialElapsed)) + geom_histogram()
+p1_slider <- ggplot(grouped_data_slider, aes(logFirstContactEndTrialElapsed)) + geom_histogram()
 
 grid.arrange(p1_global, p1_keyboard, p1_slider, nrow=1)
 ```
+Let's perform a T-test between the 2 conditions
+Paired T-Test expect the difference between the two observations to be normally distributed
+```{r}
+difference_t_test = grouped_data_keyboard$logFirstContactEndTrialElapsed - grouped_data_slider$logFirstContactEndTrialElapsed
+hist(difference_t_test)
+shapiro_test(difference_t_test) #0.6265 -> normal
+qq_data <- as.data.frame(difference_t_test)
+str(qq_data)
+p1<-ggplot(qq_data, aes(sample=difference_t_test)) + stat_qq() + stat_qq_line()
+p1
+```
 
 
+```{r}
+#within-subjects
+# we got p-value 0.008
+t.test(grouped_data_keyboard$logFirstContactEndTrialElapsed, grouped_data_slider$logFirstContactEndTrialElapsed, paired = TRUE, alternative = "two.sided")
+```
+What's the difference using pairwise.t.test to just t.test?
+```{r}
+pairwise.t.test(
+  grouped_data$logFirstContactEndTrialElapsed,
+  grouped_data$condition,
+  p.adjust.method="bonferroni")
+```
+
+
+
+Let's see if the non-parametric test can also detect the difference between the 2 conditions
+
+```{r}
+#wilcox.test(grouped_data_keyboard$firstContactEndTrialElapsed, grouped_data_keyboard$firstContactEndTrialElapsed, paired = TRUE, alternative = "two.sided")
+```
+By doing an ANOVA paired test, do we get the same result as the T-test?
+```{r}
+
+# this is just one-way anova. not the right test but just to see the results
+# imaging we don't have paired observations.
+# results: if the observations were paired, then one-way anova's p-value = 0.0926 -> not significant
+anova_one_way <- aov(logFirstContactEndTrialElapsed~condition, data = grouped_data)
+summary(anova_one_way)
+```
+1-Way ANOVA repeated measures
+```{r}
+anova_one_way_repeated <- aov(logFirstContactEndTrialElapsed~condition + Error(participant/condition), data = grouped_data)
+summary(anova_one_way_repeated)
+```
