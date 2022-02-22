@@ -1,6 +1,8 @@
 ---
 title: "Calibration Experiment"
-output: html_notebook
+output:
+  html_notebook: default
+  pdf_document: default
 ---
 [comment]: <> (Markdown Section. R code un {chunks})
 Download and import dependencies.
@@ -39,6 +41,9 @@ library(logspline)
 if(!require(rstatix)){install.packages('rstatix')}
 library(rstatix)
 
+if(!require(afex)){install.packages('afex')}
+library("afex")  
+
 ```
 
 Set up working directory and read raw input files
@@ -51,6 +56,8 @@ questionnaire_raw <- read.csv(questionnaire_raw_filename, na.strings = c("-"))
 # note:
 # R renamed column names starting with a number to X<number>
 ```
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Part 1
 
 Let's declare the name of the columns and whether they are a positive or negative question
 ```{r}
@@ -110,113 +117,161 @@ ids = seq.int(nrow(questionnaire_raw))
 keyboard_answers <- questionnaire_raw %>%
   select(ends_with("Keyboard"))
 
+slider_answers <- questionnaire_raw %>%
+  select(ends_with("Slider"))
+
+keyboard_answers$method <- "Keyboard"
+keyboard_answers$participant <- ids
+
+slider_answers$method <- "Slider"
+slider_answers$participant <- ids
+
 keyboard_answers <- keyboard_answers %>%
-  #rename_with(get_base_name_cols)
-  rename_with(get_base_name_cols)
-
-get_base_name("X1_Complex_Keyboard")
-
-```
-
-
-
-```{r}
-#View(questionnaire_raw)
-head(questionnaire_raw)
-
-
-
-```
-
-For the questionnaire dataframe, add two new columns having the SUS score for the keyboard and for the slider methods. This is done per row (participant)
-
-```{r}
-keyboard_columns = c(
-  'X1_Complex_Keyboard',
-  'X2_Easy_Keyboard',
-  'X3_learn_quickly_Keyboard',
-  'X4_Cumbersome_Keyboard',
-  'X5_Confident_Keyboard',
-  'X6_Learn_Lots_Keyboard',
-  'X7_Fast_Keyboard',
-  'X8_Accurate_Keyboard'
+  rename(
+    X1_Complex = X1_Complex_Keyboard,
+    X2_Easy = X2_Easy_Keyboard,
+    X3_learn_quickly = X3_learn_quickly_Keyboard,
+    X4_Cumbersome = X4_Cumbersome_Keyboard,
+    X5_Confident = X5_Confident_Keyboard,
+    X6_Learn_Lots = X6_Learn_Lots_Keyboard,
+    X7_Fast = X7_Fast_Keyboard,
+    X8_Accurate = X8_Accurate_Keyboard
 )
 
-
-slider_columns = c(
-  'X1_Complex_Slider',
-  'X2_Easy_Slider',
-  'X3_learn_quickly_Slider',
-  'X4_Cumbersome_Slider',
-  'X5_Confident_Slider',
-  'X6_Learn_Lots_Slider',
-  'X7_Fast_Slider',
-  'X8_Accurate_Slider'
+slider_answers <- slider_answers %>%
+  rename(
+    X1_Complex = X1_Complex_Slider,
+    X2_Easy = X2_Easy_Slider,
+    X3_learn_quickly = X3_learn_quickly_Slider,
+    X4_Cumbersome = X4_Cumbersome_Slider,
+    X5_Confident = X5_Confident_Slider,
+    X6_Learn_Lots = X6_Learn_Lots_Slider,
+    X7_Fast = X7_Fast_Slider,
+    X8_Accurate = X8_Accurate_Slider
 )
 
-positivity = c(
-    'X1_Complex' = F,
-    'X2_Easy' = T,
-    'X3_learn_quickly' = T,
-    'X4_Cumbersome' = F,
-    'X5_Confident' = T,
-    'X6_Learn_Lots' = F,
-    'X7_Fast' = T,
-    'X8_Accurate' = T
-)
+sus_df <- bind_rows(keyboard_answers, slider_answers)
+
+# let's invert the score of the negative questions
+sus_df <- sus_df %>%
+  mutate(
+    X1_Complex = 4 - X1_Complex,
+    X4_Cumbersome = 4 - X4_Cumbersome,
+    X6_Learn_Lots = 4 - X6_Learn_Lots
+  )
 
 # 5 positive questions and 3 negative
 # max score 8 x 4 = 32 -> scale_factor = 3.125
-scale_factor = 3.125
+#scale_factor = 3.125
+nr_questions <- 8 # change here depending on how many questions we want to consider
+max_score_val <- 4
+scale_factor <- 100 / (nr_questions * max_score_val)
 
-# find the position of the last '_' character
-# so annoying there is no basic rfind in R
-rfind <- function(s, char) { rev(grep(char, unlist(strsplit(s, NULL)), fixed=T))[1]}
-
-# custom function to calculate SUS score
-get_sus <- function(entry, columns_labels, positivity, scale_factor)
-{
-  accum = 0
-  # drop the last part of the column name
-  for (col_name in columns_labels)
-  {
-    
-    base = substr(col_name, 1, rfind(col_name, '_')-1)
-    print(col_name)
-    print(positivity)
-    print(positivity[base])
-    print(entry)
-    #score = if(positivity[base]) row[col_name] else (4 - row[col_name])
-    score = if(positivity[base]) entry$col_name else (4 - entry$col_name)
-    accum = accum + score
-  }
-  return(accum * scale_factor)
-}
-
-# convert score based on positivity
-for (col_name in keyboard_columns)
-{
-  print(col_name)
-  base = substr(col_name, 1, rfind(col_name, '_')-1)
-  new_column_name = paste(col_name, "SUS", sep="_")
-  #questionnaire_raw %>%
-    #mutate_(new_column_name = if_else(positivity[base], (!!as.name(col_name)), 4-(!!as.name(col_name))))
-    #mutate_(new_column_name = if_else(positivity[base], .data[[col_name]], 4-.data[[col_name]]))
-  questionnaire_raw[[new_column_name]] <- if(positivity[base]) questionnaire_raw[[col_name]] else (4 - questionnaire_raw[[col_name]])
-    #add_column(test = if_else(positivity[base], col_name, 4-col_name))
-}
-
-# 
-# questionnaire_raw %>%
-#   rowwise() %>%
-#   do (row = as_data_frame(.))
-#   mutate(
-#     KeyboardSUS = get_sus(row, keyboard_columns, positivity, scale_factor)
-#   )
-
+sus_df <- sus_df %>%
+  mutate(score = rowSums(.[1:nr_questions]) * scale_factor)
 
 ```
 
+Let's plot the distribution of the scores
+```{r}
+p1 <- ggplot(sus_df, aes(score)) + geom_histogram()
+p1 <- ggplot(sus_df, aes(score)) + geom_histogram()
+p1 <- ggplot(sus_df, aes(score)) + geom_histogram()
+
+sus_keyboard <- sus_df %>%
+  filter(method == "Keyboard")
+
+sus_slider <- sus_df %>%
+  filter(method == "Slider")
+
+p1_global <- ggplot(sus_df, aes(score)) + geom_histogram()
+p1_keyboard <- ggplot(sus_keyboard, aes(score)) + geom_histogram()
+p1_slider <- ggplot(sus_slider, aes(score)) + geom_histogram()
+
+grid.arrange(p1_global, p1_keyboard, p1_slider, nrow=1)
+```
+Distribution of the scores group by condition
+
+```{r}
+ggdensity(sus_df,
+  x = "score", # variable of interest
+  add = "mean",# add vertical line for mean
+  rug = TRUE, # add "rugs" to display the density of the values along the axis
+  color = "method", fill = "method",
+  palette = c("#00AFBB", "#E7B800"))
+```
+
+
+
+Violion plot for the score
+```{r}
+a1 <- aov_ez("participant", "score", sus_df,
+             between = NULL,
+             within = c("method"),
+             anova_table = list(es = "pes"))
+
+## Check the normality of the residuals
+# in this case, the residuals are not normal -> let's do a non-parametric test
+residuals <- a1$lm$residuals
+shapiro.test(residuals)
+qqPlot(residuals)
+
+# boxplot to see outliers
+p1 <- afex_plot(a1, x = "method", error = "within", 
+                 mapping = c("linetype", "shape", "fill"),
+                 data_geom = ggplot2::geom_boxplot, 
+                 data_arg = list(width = 0.5))
+
+# violin plot to see distribution
+p2 <- afex_plot(a1, x = "method", error = "within", 
+                mapping = c("linetype", "shape", "fill"),
+                data_geom = ggplot2::geom_violin, 
+                data_arg = list(width = 0.5))
+
+grid.arrange(p1, p2, nrow=1)
+
+```
+Non-parametric test for the SUS score
+```{r}
+#sus_keyboard$score
+#sus_slider$score
+# the scores for each condition are the same in 2 out of 16 participants.
+difference <- sus_keyboard$score - sus_slider$score
+difference
+wilcox.test(sus_keyboard$score, sus_slider$score, paired = TRUE, alternative = "two.sided")
+```
+Let's analyze the questions one by one
+```{r}
+#set up empty variable to store all simulated p-values
+nr_questions <- 8
+p <-numeric(nr_questions) 
+
+for (question_id in 1: nr_questions)
+{
+  keyboard_answers <- sus_keyboard[question_id]
+  slider_answers <- sus_slider[question_id]
+  
+  keyboard_answers <- as.numeric(unlist(keyboard_answers))
+  slider_answers <- as.numeric(unlist(slider_answers))
+  
+  differences <- keyboard_answers - slider_answers
+  print(differences)
+  print(paste("non-parametric test for question", question_id))
+
+  test_result <- wilcox.test(keyboard_answers, slider_answers, paired = TRUE, alternative = "two.sided")
+  p[question_id] <- test_result$p.value
+}
+print(p)
+#q1_keyboard = sus_keyboard$X1_Complex
+
+```
+
+In most of the questions, wilcoxon test told us there were identical scores and
+the p-values are not significant.
+Only exception was question 7 (how fast the method was), with p-value of 0.0059
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+PART 2
 Analysis of In-Experiment Measured Data (dynamic range, elapsed time)
 
 ```{r include=FALSE, echo=FALSE}
@@ -319,7 +374,10 @@ measured_data$outlier <- is_outlier(measured_data$firstContactEndTrialElapsed)
 measured_data$extreme <- is_extreme(measured_data$firstContactEndTrialElapsed)
 
 # show ""outliers""
-measured_data$participant[which(measured_data$extreme)]
+#measured_data$participant[which(measured_data$extreme)]
+
+# same as subset(df, filter, vars to show)
+subset(measured_data, extreme, c(participant, trial, condition))
 ```
 
 
@@ -394,7 +452,7 @@ p1_slider <- ggplot(grouped_data_slider, aes(logFirstContactEndTrialElapsed)) + 
 
 grid.arrange(p1_global, p1_keyboard, p1_slider, nrow=1)
 ```
-Let's plot the 3 distributions all together
+Let's plot distributions all together
 ```{r}
 ggdensity(grouped_data,
   x = "logFirstContactEndTrialElapsed", # variable of interest
@@ -404,6 +462,11 @@ ggdensity(grouped_data,
   palette = c("#00AFBB", "#E7B800"))
 ```
 
+```{r}
+p1_keyboard <- ggplot(grouped_data_keyboard, aes(firstContactEndTrialElapsed)) + geom_histogram()
+p1_slider <- ggplot(grouped_data_slider, aes(firstContactEndTrialElapsed)) + geom_histogram()
+grid.arrange(p1_keyboard, p1_slider, nrow=1)
+```
 
 
 Let's perform a T-test between the 2 conditions
@@ -466,7 +529,7 @@ pairwise.t.test(
 Let's see if the non-parametric test can also detect the difference between the 2 conditions
 
 ```{r}
-#wilcox.test(grouped_data_keyboard$firstContactEndTrialElapsed, grouped_data_keyboard$firstContactEndTrialElapsed, paired = TRUE, alternative = "two.sided")
+wilcox.test(grouped_data_keyboard$firstContactEndTrialElapsed, grouped_data_slider$firstContactEndTrialElapsed, paired = TRUE, alternative = "two.sided")
 ```
 By doing an ANOVA paired test, do we get the same result as the T-test?
 ```{r}
@@ -481,4 +544,25 @@ summary(anova_one_way)
 ```{r}
 anova_one_way_repeated <- aov(logFirstContactEndTrialElapsed~condition + Error(participant/condition), data = grouped_data)
 summary(anova_one_way_repeated)
+
+a1 <- aov_ez("participant", "firstContactEndTrialElapsed", grouped_data,
+             between = NULL,
+             within = c("condition"),
+             anova_table = list(es = "pes"))
+
+t.test(grouped_data_keyboard$firstContactEndTrialElapsed, grouped_data_slider$firstContactEndTrialElapsed, paired = TRUE, alternative = "two.sided")
+
+## Check the normality of the residuals
+residuals <- a1$lm$residuals
+shapiro.test(residuals)
+qqPlot(residuals)
+
+afex_plot(a1, x = "condition", error = "within", 
+                mapping = c("linetype", "shape", "fill"),
+                data_geom = ggplot2::geom_boxplot, 
+                data_arg = list(width = 0.5)) 
+
+## Anova table
+a1$anova_table
+
 ```
