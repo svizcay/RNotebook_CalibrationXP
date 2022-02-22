@@ -200,6 +200,21 @@ ggdensity(sus_df,
   color = "method", fill = "method",
   palette = c("#00AFBB", "#E7B800"))
 ```
+Paired T-Test out of curiosity
+```{r}
+# for paired t-test, differences need to be normally distributed
+difference_t_test = sus_keyboard$score - sus_slider$score
+hist(difference_t_test)
+shapiro_test(difference_t_test) #0.023 -> not normal
+qq_data <- as.data.frame(difference_t_test)
+#str(qq_data)
+#p1<-ggplot(qq_data, aes(sample=difference_t_test)) + stat_qq() + stat_qq_line()
+#p1
+
+# qqPlot from car package draws also surrounding area
+qqPlot(difference_t_test)
+t.test(sus_keyboard$score, sus_slider$score, paired = TRUE, alternative = "two.sided") #p-value 0.1642
+```
 
 
 
@@ -345,8 +360,8 @@ grid.arrange(p1, p2, p3, p4, p5, p6, nrow=2)
 #hist(measured_data$firstContactEndTrialElapsed)
 #boxplot(measured_data$`firstContact-endTrial-elapsedTime` ~ measured_data$condition)
 ```
-Let's try to find the outliers
-```{r}
+Let's try to find the outliers regarding the calibration elapsed time
+```{r include=FALSE, echo=FALSE}
 nr_participants = n_distinct(measured_data$participant)
 
 for (id in 1: nr_participants)
@@ -437,7 +452,7 @@ For now, let's not discard any trial yet and let's average the metrics per condi
 grouped_data <-  measured_data %>%
   group_by(participant, condition) %>%
   summarise_at(
-    vars(firstContactEndTrialElapsed, logFirstContactEndTrialElapsed),
+    vars(firstContactEndTrialElapsed, logFirstContactEndTrialElapsed, dynamicRange),
     mean)
 
 grouped_data_keyboard <- grouped_data %>%
@@ -452,7 +467,7 @@ p1_slider <- ggplot(grouped_data_slider, aes(logFirstContactEndTrialElapsed)) + 
 
 grid.arrange(p1_global, p1_keyboard, p1_slider, nrow=1)
 ```
-Let's plot distributions all together
+Let's plot distributions all together for the elapsed time variable
 ```{r}
 ggdensity(grouped_data,
   x = "logFirstContactEndTrialElapsed", # variable of interest
@@ -461,6 +476,17 @@ ggdensity(grouped_data,
   color = "condition", fill = "condition",
   palette = c("#00AFBB", "#E7B800"))
 ```
+And for the dynamic range
+```{r}
+ggdensity(grouped_data,
+  x = "dynamicRange", # variable of interest
+  add = "mean",# add vertical line for mean
+  rug = TRUE, # add "rugs" to display the density of the values along the axis
+  color = "condition", fill = "condition",
+  palette = c("#00AFBB", "#E7B800"))
+```
+
+
 
 ```{r}
 p1_keyboard <- ggplot(grouped_data_keyboard, aes(firstContactEndTrialElapsed)) + geom_histogram()
@@ -504,6 +530,12 @@ Let's plot the distribution per condition
 ggpaired(data = grouped_data, x = "condition" , y = "logFirstContactEndTrialElapsed", id="participant", fill="condition")
 #grid.arrange(p1, p2, nrow=1)
 ```
+and also for the dynamic range
+The observations look pretty much one-to-one, i.e. for a given participant, its dynamic range didn't change
+based on the keyboard/slider condition
+```{r}
+ggpaired(data = grouped_data, x = "condition" , y = "dynamicRange", id="participant", fill="condition")
+```
 
 
 
@@ -531,6 +563,14 @@ Let's see if the non-parametric test can also detect the difference between the 
 ```{r}
 wilcox.test(grouped_data_keyboard$firstContactEndTrialElapsed, grouped_data_slider$firstContactEndTrialElapsed, paired = TRUE, alternative = "two.sided")
 ```
+
+Non-parametric test for dynamic range
+there is no significant difference
+```{r}
+wilcox.test(grouped_data_keyboard$dynamicRange, grouped_data_slider$dynamicRange, paired = TRUE, alternative = "two.sided")
+```
+
+
 By doing an ANOVA paired test, do we get the same result as the T-test?
 ```{r}
 
@@ -542,8 +582,8 @@ summary(anova_one_way)
 ```
 1-Way ANOVA repeated measures
 ```{r}
-anova_one_way_repeated <- aov(logFirstContactEndTrialElapsed~condition + Error(participant/condition), data = grouped_data)
-summary(anova_one_way_repeated)
+#anova_one_way_repeated <- aov(logFirstContactEndTrialElapsed~condition + Error(participant/condition), data = #grouped_data)
+#summary(anova_one_way_repeated)
 
 a1 <- aov_ez("participant", "firstContactEndTrialElapsed", grouped_data,
              between = NULL,
@@ -566,3 +606,35 @@ afex_plot(a1, x = "condition", error = "within",
 a1$anova_table
 
 ```
+
+
+ANOVA for the dynamic Range
+```{r}
+a1 <- aov_ez("participant", "dynamicRange", grouped_data,
+             between = NULL,
+             within = c("condition"),
+             anova_table = list(es = "pes"))
+
+## Check the normality of the residuals
+residuals <- a1$lm$residuals
+shapiro.test(residuals)
+qqPlot(residuals)
+
+# boxplot to see outliers
+p1 <- afex_plot(a1, x = "condition", error = "within", 
+                 mapping = c("linetype", "shape", "fill"),
+                 data_geom = ggplot2::geom_boxplot, 
+                 data_arg = list(width = 0.5))
+
+# violin plot to see distribution
+p2 <- afex_plot(a1, x = "condition", error = "within", 
+                mapping = c("linetype", "shape", "fill"),
+                data_geom = ggplot2::geom_violin, 
+                data_arg = list(width = 0.5))
+
+grid.arrange(p1, p2, nrow=1)
+
+## Anova table
+a1$anova_table
+```
+
