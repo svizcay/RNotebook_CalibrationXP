@@ -8,7 +8,10 @@ Download and import dependencies.
 if(!require(psych)){install.packages('psych')} # for describe()
 library(psych)
 
-if(!require(car)){install.packages('car')} # for qqPlot
+# Companion to Applied Regression CAR (who decides these horrible names?)
+# for qqPlot,
+# leveneTest for homogeneity of variance (for t-test) -> wrong, this is for independent samples t-test comparison
+if(!require(car)){install.packages('car')} 
 library(car)
 
 # plot using a grid
@@ -310,6 +313,13 @@ Outliers and Extreme points
 # 1, 15, 9 outliers
 # 2 extreme outlier
 measured_data_outliers <- identify_outliers(measured_data, variable="firstContactEndTrialElapsed")
+
+# add outlier info to the main table
+measured_data$outlier <- is_outlier(measured_data$firstContactEndTrialElapsed)
+measured_data$extreme <- is_extreme(measured_data$firstContactEndTrialElapsed)
+
+# show ""outliers""
+measured_data$participant[which(measured_data$extreme)]
 ```
 
 
