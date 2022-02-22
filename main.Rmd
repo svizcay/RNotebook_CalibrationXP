@@ -12,7 +12,7 @@ library(psych)
 
 # Companion to Applied Regression CAR (who decides these horrible names?)
 # for qqPlot,
-# leveneTest for homogeneity of variance (for t-test) -> wrong, this is for independent samples t-test comparison
+# leveneTest for homogeneity of variance (for t-test) -> wrong, this is for independent samples t-test comparison (not our case)
 if(!require(car)){install.packages('car')} 
 library(car)
 
@@ -29,7 +29,6 @@ library(ggpubr)
 
 if(!require(tidyverse)){install.packages('tidyverse')}
 library(tidyverse)
-
 
 # to find what's the data distribution
 if(!require(fitdistrplus)){install.packages('fitdistrplus')}
@@ -191,7 +190,7 @@ p1_slider <- ggplot(sus_slider, aes(score)) + geom_histogram()
 
 grid.arrange(p1_global, p1_keyboard, p1_slider, nrow=1)
 ```
-We calculate a SUS-like score for a system where participants needs to calibrate the intensity.
+We calculate a SUS-like score for a system where participants need to calibrate the intensity.
 In one condition, participants use a keyboard and in the other one they do it in VR using an avatar
 interacting with a virtual slider. We get the following distribution of scores for each conditions
 
@@ -254,7 +253,7 @@ We perform a paired T-test just to make sure we are not missing finding an effec
 t.test(sus_keyboard$score, sus_slider$score, paired = TRUE, alternative = "two.sided") #p-value 0.1642
 ```
 Once again we get the same result that there is no statistically significant difference between the scores.
-This was kind of visible from first plot showing the histogram of the scores and this is also reinforced by seeing the distribution of the scores using box and violin plots
+This was kind of visible from the first plot showing the histogram of the scores and this is also reinforced by seeing the distribution of the scores using box and violin plots
 
 ```{r echo=FALSE}
 a1 <- aov_ez("participant", "score", sus_df,
@@ -328,7 +327,7 @@ ggplot(question_seven, aes(X7_Fast, fill=method)) + geom_bar(position="dodge") +
 Here we can see most of the participants graded the keyboard condition with a lower score compared to the calibration in VR using the slider.
 
 
-## PART 2 Analysis of In-Experiment Measured Data (dynamic range, elapsed time)
+## Part 2 Analysis of In-Experiment Measured Data
 
 ```{r include=FALSE, echo=FALSE}
 input_files <- list.files(
@@ -379,6 +378,22 @@ measured_data %>%
 #describe(measured_data)
 ```
 
+```{r  include=FALSE}
+# create grouped dataframe
+grouped_data <-  measured_data %>%
+  group_by(participant, condition) %>%
+  summarise_at(
+    vars(firstContactEndTrialElapsed, logFirstContactEndTrialElapsed, dynamicRange),
+    mean)
+
+grouped_data_keyboard <- grouped_data %>%
+  filter(condition == "Keyboard")
+
+grouped_data_slider <- grouped_data %>%
+  filter(condition == "Slider")
+```
+
+
 As objective metrics, we recorded the calibration values (sensation and discomfort thresholds) obtained from the calibrations using each of the two proposed methods (keyboard, slider). Additionally, we recorded how long it took to calibrate using each of the methods.
 
 To be more precise, we recorded three temporal metrics:
@@ -413,10 +428,78 @@ grid.arrange(p1, p2, p3, p4, p5, p6, nrow=2)
 ```
 By comparing the last three plots, we can see the values and the distribution of the temporal variables are quite similar so we will analyze just the calibration time as a representative of the three.
 
-For the calibration variables, we will focus only in the calibration range.
+For the calibration variables, we will focus only in the calibration dynamic range.
 
 Our hypotheses are that the calibration in VR is faster and produces exactly the same calibration dynamic range
 as the keyboard condition, i.e participants are capable of setting the exact same values but faster.
+
+Let's start the analysis with the calibration time variable. Let's see the distribution of the variable per condition
+```{r echo=FALSE}
+ggdensity(grouped_data,
+  x = "firstContactEndTrialElapsed", # variable of interest
+  add = "mean",# add vertical line for mean
+  rug = TRUE, # add "rugs" to display the density of the values along the axis
+  color = "condition", fill = "condition",
+  palette = c("#00AFBB", "#E7B800"),
+  xlab="calibration time")
+```
+We see that the average calibration time using the keyboard method is longer than the slider method.
+We would like to test if that difference is statistically significant. We would like to try a parametric test but we need to know what the distribution of our data is.
+
+We analyze the skewness-kurtosis of our data using a Cullen and Frey graph
+
+```{r echo=FALSE}
+descdist(measured_data$firstContactEndTrialElapsed, discrete = FALSE)
+```
+Based on the previous graph, it seems our data follows some sort of log-normal distribution.
+
+We can reassure this by making a Q-Q plot against that distribution
+```{r  echo=FALSE}
+#scaled_data <- (measured_data$firstContactEndTrialElapsed - min(measured_data$firstContactEndTrialElapsed) + 0.001) / (max(measured_data$firstContactEndTrialElapsed) - min(measured_data$firstContactEndTrialElapsed) + 0.002)
+#fit.beta <- fitdist(scaled_data, "beta")
+#p1 <- plot(fit.beta)
+
+#fit.gamma <- fitdist(measured_data$firstContactEndTrialElapsed, "gamma")
+#p2 <- plot(fit.gamma)
+
+# r internal function is called lnorm and not lognormal (stats package)
+fit.lognormal <- fitdist(measured_data$firstContactEndTrialElapsed, "lnorm")
+p3 <- plot(fit.lognormal)
+
+#p1
+
+#p2
+
+p3
+```
+
+If our data is effectively log-normally distributed, then the logarithmic of it will follow a normal distribution.
+
+```{r echo=FALSE}
+measured_data <- measured_data %>%
+    #add_column(logFirstContactEndTrialElapsed = log10(.$firstContactEndTrialElapsed))
+    mutate(logFirstContactEndTrialElapsed = log10(firstContactEndTrialElapsed))
+
+
+p1 <- ggplot(measured_data, aes(logFirstContactEndTrialElapsed)) + geom_histogram(bins=default_nr_bins) + xlab("log(calibration time)")
+plot(p1)
+
+
+fit.normal <- fitdist(measured_data$logFirstContactEndTrialElapsed, "norm")
+p2 <- plot(fit.normal)
+
+p2
+
+
+```
+
+This is confirmed using a Shapiro-test for normality having strong evidence for that.
+```{r echo=FALSE}
+result_test <- shapiro_test(measured_data$logFirstContactEndTrialElapsed) # 0.95 -> data is normal
+print(result_test)
+```
+
+
 
 
 ```{r include=FALSE, echo=FALSE}
@@ -458,69 +541,12 @@ subset(measured_data, extreme, c(participant, trial, condition))
 
 
 
-Identify data distribution
 
-```{r}
-descdist(measured_data$firstContactEndTrialElapsed, discrete = FALSE)
-```
-
-Let's plot some of the distributions against the observation
-```{r}
-scaled_data <- (measured_data$firstContactEndTrialElapsed - min(measured_data$firstContactEndTrialElapsed) + 0.001) / (max(measured_data$firstContactEndTrialElapsed) - min(measured_data$firstContactEndTrialElapsed) + 0.002)
-
-
-fit.beta <- fitdist(scaled_data, "beta")
-p1 <- plot(fit.beta)
-
-fit.gamma <- fitdist(measured_data$firstContactEndTrialElapsed, "gamma")
-p2 <- plot(fit.gamma)
-
-# r internal function is called lnorm and not lognormal (stats package)
-fit.lognormal <- fitdist(measured_data$firstContactEndTrialElapsed, "lnorm")
-p3 <- plot(fit.lognormal)
-
-p1
-
-p2
-
-p3
-```
-Data follows some lognormal distribution
-let's transform the data
-
-```{r}
-measured_data <- measured_data %>%
-    #add_column(logFirstContactEndTrialElapsed = log10(.$firstContactEndTrialElapsed))
-    mutate(logFirstContactEndTrialElapsed = log10(firstContactEndTrialElapsed))
-
-
-p1 <- ggplot(measured_data, aes(logFirstContactEndTrialElapsed)) + geom_histogram()
-plot(p1)
-
-shapiro_test(measured_data$logFirstContactEndTrialElapsed) # 0.95 -> data is normal
-
-fit.normal <- fitdist(measured_data$logFirstContactEndTrialElapsed, "norm")
-p2 <- plot(fit.normal)
-
-p2
-
-
-```
 
 For now, let's not discard any trial yet and let's average the metrics per condition per participant
 
 ```{r}
-grouped_data <-  measured_data %>%
-  group_by(participant, condition) %>%
-  summarise_at(
-    vars(firstContactEndTrialElapsed, logFirstContactEndTrialElapsed, dynamicRange),
-    mean)
 
-grouped_data_keyboard <- grouped_data %>%
-  filter(condition == "Keyboard")
-
-grouped_data_slider <- grouped_data %>%
-  filter(condition == "Slider")
 
 p1_global <- ggplot(grouped_data, aes(logFirstContactEndTrialElapsed)) + geom_histogram()
 p1_keyboard <- ggplot(grouped_data_keyboard, aes(logFirstContactEndTrialElapsed)) + geom_histogram()
@@ -528,15 +554,7 @@ p1_slider <- ggplot(grouped_data_slider, aes(logFirstContactEndTrialElapsed)) + 
 
 grid.arrange(p1_global, p1_keyboard, p1_slider, nrow=1)
 ```
-Let's plot distributions all together for the elapsed time variable
-```{r}
-ggdensity(grouped_data,
-  x = "logFirstContactEndTrialElapsed", # variable of interest
-  add = "mean",# add vertical line for mean
-  rug = TRUE, # add "rugs" to display the density of the values along the axis
-  color = "condition", fill = "condition",
-  palette = c("#00AFBB", "#E7B800"))
-```
+
 And for the dynamic range
 ```{r}
 ggdensity(grouped_data,
