@@ -5,8 +5,8 @@ output:
   pdf_document: default
 ---
 [comment]: <> (Markdown Section. R code un {chunks})
-Download and import dependencies.
 ```{r include=FALSE, echo=FALSE}
+# dependencies
 if(!require(psych)){install.packages('psych')} # for describe()
 library(psych)
 
@@ -46,8 +46,8 @@ library("afex")
 
 ```
 
-Set up working directory and read raw input files
-```{r}
+```{r include=FALSE, echo=FALSE}
+# set up working directory and read raw input files
 sprintf("current working directory = %s", getwd())
 results_directory = "results"
 questionnaire_raw_filename = paste(results_directory, "0_PostQuestionnaire.csv", sep="/")
@@ -56,11 +56,11 @@ questionnaire_raw <- read.csv(questionnaire_raw_filename, na.strings = c("-"))
 # note:
 # R renamed column names starting with a number to X<number>
 ```
-++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-Part 1
 
-Let's declare the name of the columns and whether they are a positive or negative question
-```{r}
+## Part 1 SUS Questionnaire
+
+```{r include=FALSE, echo=FALSE}
+# Let's declare the name of the columns and whether they are a positive or negative question
 keyboard_columns = c(
   'X1_Complex_Keyboard',
   'X2_Easy_Keyboard',
@@ -110,8 +110,8 @@ get_base_name_cols <- function(col_names)
 }
 ```
 
-Let's create a dataframe with columns: id, question_1, ..., question_n, method
-```{r}
+
+```{r include=FALSE, echo=FALSE}
 ids = seq.int(nrow(questionnaire_raw))
 
 keyboard_answers <- questionnaire_raw %>%
@@ -172,8 +172,9 @@ sus_df <- sus_df %>%
 
 ```
 
-Let's plot the distribution of the scores
-```{r}
+
+```{r  include=FALSE, echo=FALSE}
+# Let's plot the distribution of the scores
 p1 <- ggplot(sus_df, aes(score)) + geom_histogram()
 p1 <- ggplot(sus_df, aes(score)) + geom_histogram()
 p1 <- ggplot(sus_df, aes(score)) + geom_histogram()
@@ -190,9 +191,11 @@ p1_slider <- ggplot(sus_slider, aes(score)) + geom_histogram()
 
 grid.arrange(p1_global, p1_keyboard, p1_slider, nrow=1)
 ```
-Distribution of the scores group by condition
+We calculate a SUS-like score for a system where participants needs to calibrate the intensity.
+In one condition, participants use a keyboard and in the other one they do it in VR using an avatar
+interacting with a virtual slider. We get the following distribution of scores for each conditions
 
-```{r}
+```{r echo=FALSE}
 ggdensity(sus_df,
   x = "score", # variable of interest
   add = "mean",# add vertical line for mean
@@ -200,26 +203,60 @@ ggdensity(sus_df,
   color = "method", fill = "method",
   palette = c("#00AFBB", "#E7B800"))
 ```
-Paired T-Test out of curiosity
-```{r}
-# for paired t-test, differences need to be normally distributed
+We attempt to find if the difference of the scores between the conditions is statistically significant
+by means of a paired T-test.
+
+We need to verify the assumption that the observation (the difference between two set of values) is continuous and approximately normally distributed.
+
+The distribution of the difference is as follows
+```{r echo=FALSE}
 difference_t_test = sus_keyboard$score - sus_slider$score
-hist(difference_t_test)
-shapiro_test(difference_t_test) #0.023 -> not normal
-qq_data <- as.data.frame(difference_t_test)
+hist(difference_t_test,
+     main="Distribution of the difference of SUS Scores",
+     xlab="difference of scores")
+```
+The previous distribution doesn't look normal but we can verify this by performing a Shapiro-test
+and inspecting a Q-Q plot
+```{r echo=FALSE}
+shapiro_test(difference_t_test)
+#print(shapiro_test(difference_t_test)) #0.023 -> not normal
+#qq_data <- as.data.frame(difference_t_test)
+qqplot_result <- qqPlot(difference_t_test)
+```
+A p-value of 0.02 makes us reject the null hypothesis (normality of the data)
+
+Given that we do not fulfill the assumptions, we perform a non-parametric test to see
+if the difference between the scores is statistically significant
+
+We perform a two-sample Wilcoxon-test (also known as Mann-Whitney-test)
+```{r echo=FALSE}
+#sus_keyboard$score
+#sus_slider$score
+# the scores for each condition are the same in 2 out of 16 participants.
+difference <- sus_keyboard$score - sus_slider$score
+# difference
+test_result <- wilcox.test(sus_keyboard$score, sus_slider$score, paired = TRUE, alternative = "two.sided")
+print(test_result)
+```
+Wilcoxon-test warnings us about the similarity of the scores.
+In anyway, we obtain a p-value of 0.2 which tells us there is no evidence to reject the null hypothesis.
+
+Non-parametric tests have less statistical power than parametric ones.
+We perform a paired T-test just to make sure we are not missing finding an effect.
+
+```{r echo=FALSE}
+# for paired t-test, differences need to be normally distributed
 #str(qq_data)
 #p1<-ggplot(qq_data, aes(sample=difference_t_test)) + stat_qq() + stat_qq_line()
 #p1
-
 # qqPlot from car package draws also surrounding area
-qqPlot(difference_t_test)
+
 t.test(sus_keyboard$score, sus_slider$score, paired = TRUE, alternative = "two.sided") #p-value 0.1642
 ```
+Once again we get the same result that there is no statistically significant difference between the scores.
+This was kind of visible from first plot showing the histogram of the scores and this is also reinforced by seeing the distribution of the scores using box and violin plots
 
-
-
-Violion plot for the score
-```{r}
+```{r echo=FALSE}
 a1 <- aov_ez("participant", "score", sus_df,
              between = NULL,
              within = c("method"),
@@ -227,9 +264,9 @@ a1 <- aov_ez("participant", "score", sus_df,
 
 ## Check the normality of the residuals
 # in this case, the residuals are not normal -> let's do a non-parametric test
-residuals <- a1$lm$residuals
-shapiro.test(residuals)
-qqPlot(residuals)
+#residuals <- a1$lm$residuals
+#shapiro.test(residuals)
+#qqPlot(residuals)
 
 # boxplot to see outliers
 p1 <- afex_plot(a1, x = "method", error = "within", 
@@ -243,20 +280,15 @@ p2 <- afex_plot(a1, x = "method", error = "within",
                 data_geom = ggplot2::geom_violin, 
                 data_arg = list(width = 0.5))
 
-grid.arrange(p1, p2, nrow=1)
+grid.arrange(p1, p2, nrow=1, top=textGrob("Distribution of SUS scores (box & violin plots)"))
 
 ```
-Non-parametric test for the SUS score
-```{r}
-#sus_keyboard$score
-#sus_slider$score
-# the scores for each condition are the same in 2 out of 16 participants.
-difference <- sus_keyboard$score - sus_slider$score
-difference
-wilcox.test(sus_keyboard$score, sus_slider$score, paired = TRUE, alternative = "two.sided")
-```
-Let's analyze the questions one by one
-```{r}
+
+Given that the overall scores were similar, we start to analyze differences question by question.
+The SUS-like questionnaire was composed of 8 Likert-scale questions with answers in the range [0, 4] (Strongly Disagree, Strongly Agree).
+
+We perform a two-sample Wilcoxon-test for each of the 8 questions and we get the following p-values:
+```{r echo=FALSE, warning=FALSE}
 #set up empty variable to store all simulated p-values
 nr_questions <- 8
 p <-numeric(nr_questions) 
@@ -270,8 +302,8 @@ for (question_id in 1: nr_questions)
   slider_answers <- as.numeric(unlist(slider_answers))
   
   differences <- keyboard_answers - slider_answers
-  print(differences)
-  print(paste("non-parametric test for question", question_id))
+  #print(differences)
+  #print(paste("non-parametric test for question", question_id))
 
   test_result <- wilcox.test(keyboard_answers, slider_answers, paired = TRUE, alternative = "two.sided")
   p[question_id] <- test_result$p.value
@@ -280,14 +312,23 @@ print(p)
 #q1_keyboard = sus_keyboard$X1_Complex
 
 ```
+Once again we get a warning telling us the similarity between the scores among conditions (hidden in the notebook).
+We can see most of the p-values are not significant except for the question number 7 which was regarding the speed of the method.
 
-In most of the questions, wilcoxon test told us there were identical scores and
-the p-values are not significant.
-Only exception was question 7 (how fast the method was), with p-value of 0.0059
+```{r echo=FALSE}
+question_seven <- sus_df %>%
+  select(X7_Fast, method)
 
-+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
-PART 2
-Analysis of In-Experiment Measured Data (dynamic range, elapsed time)
+#speed_keyboard <- sus_keyboard[7]
+#speed_slider <- sus_slider[7]
+#keyboard_answers <- as.numeric(unlist(speed_keyboard))
+#slider_answers <- as.numeric(unlist(speed_slider))
+ggplot(question_seven, aes(X7_Fast, fill=method)) + geom_bar(position="dodge") + xlab("Speed Score") 
+```
+Here we can see most of the participants graded the keyboard condition with a lower score compared to the calibration in VR using the slider.
+
+
+## PART 2 Analysis of In-Experiment Measured Data (dynamic range, elapsed time)
 
 ```{r include=FALSE, echo=FALSE}
 input_files <- list.files(
@@ -327,26 +368,36 @@ measured_data$condition <- factor(measured_data$condition)
 rm(partial_df)
 ```
 
-Let's describe the data
-```{r}
+
+```{r include=FALSE}
 str(measured_data)
 ```
-```{r}
+```{r include=FALSE}
 measured_data %>%
   select(sensation, discomfort, dynamicRange, firstContactEndTrialElapsed, firstContactLastContactElapsed, firstContactLastSensationElapsed) %>%
   describe()
 #describe(measured_data)
 ```
 
+As objective metrics, we recorded the calibration values (sensation and discomfort thresholds) obtained from the calibrations using each of the two proposed methods (keyboard, slider). Additionally, we recorded how long it took to calibrate using each of the methods.
 
-let's make a histogram of the measured variables
-```{r}
-p1 <- ggplot(measured_data, aes(sensation)) + geom_histogram()
-p2 <- ggplot(measured_data, aes(discomfort)) + geom_histogram()
-p3 <- ggplot(measured_data, aes(dynamicRange)) + geom_histogram()
-p4 <- ggplot(measured_data, aes(firstContactLastContactElapsed)) + geom_histogram()
-p5 <- ggplot(measured_data, aes(firstContactLastSensationElapsed)) + geom_histogram()
-p6 <- ggplot(measured_data, aes(firstContactEndTrialElapsed)) + geom_histogram()
+To be more precise, we recorded three temporal metrics:
+
+1. time since the beginning of the calibration until the last adjustment (interaction time)
+2. time since the beginning of the calibration until the stimulation was turned off (sensation time)
+3. time since the beginning of the calibration until the end of the calibration (calibration time)
+
+In this section we analyze the resulting dynamic range (difference between the discomfort and sensation threshold) and the calibration time.
+
+We start by seeing the distribution of the overall recorded values.
+```{r echo=FALSE, warning=FALSE}
+default_nr_bins <- 30
+p1 <- ggplot(measured_data, aes(sensation)) + geom_histogram(bins=default_nr_bins) 
+p2 <- ggplot(measured_data, aes(discomfort)) + geom_histogram(bins=default_nr_bins)
+p3 <- ggplot(measured_data, aes(dynamicRange)) + geom_histogram(bins=default_nr_bins) + xlab("dynamic range")
+p4 <- ggplot(measured_data, aes(firstContactLastContactElapsed)) + geom_histogram(bins=default_nr_bins) + xlab("interaction time")
+p5 <- ggplot(measured_data, aes(firstContactLastSensationElapsed)) + geom_histogram(bins=default_nr_bins) + xlab("sensation time")
+p6 <- ggplot(measured_data, aes(firstContactEndTrialElapsed)) + geom_histogram(bins=default_nr_bins) + xlab("calibration time")
 #p2<-ggplot(simulatedData, aes(d)) +
 #  geom_histogram(binwidth = 4)
 #p3<-qplot(simulatedData$d,geom="boxplot")
@@ -360,8 +411,16 @@ grid.arrange(p1, p2, p3, p4, p5, p6, nrow=2)
 #hist(measured_data$firstContactEndTrialElapsed)
 #boxplot(measured_data$`firstContact-endTrial-elapsedTime` ~ measured_data$condition)
 ```
-Let's try to find the outliers regarding the calibration elapsed time
+By comparing the last three plots, we can see the values and the distribution of the temporal variables are quite similar so we will analyze just the calibration time as a representative of the three.
+
+For the calibration variables, we will focus only in the calibration range.
+
+Our hypotheses are that the calibration in VR is faster and produces exactly the same calibration dynamic range
+as the keyboard condition, i.e participants are capable of setting the exact same values but faster.
+
+
 ```{r include=FALSE, echo=FALSE}
+# Let's try to find the outliers regarding the calibration elapsed time
 nr_participants = n_distinct(measured_data$participant)
 
 for (id in 1: nr_participants)
@@ -376,8 +435,10 @@ for (id in 1: nr_participants)
 
 
 ```
-Outliers and Extreme points
+
 ```{r}
+# Let's try to find the outliers regarding the calibration elapsed time
+
 # 4 outliers, one of them extreme.
 # this were obtained using all datapoints and not using a "within-participant" comparison.
 # 1, 15, 9 outliers
