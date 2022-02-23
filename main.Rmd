@@ -1,8 +1,10 @@
 ---
 title: "Calibration Experiment"
 output:
-  html_notebook: default
+  html_document:
+    df_print: paged
   pdf_document: default
+  html_notebook: default
 ---
 [comment]: <> (Markdown Section. R code un {chunks})
 ```{r include=FALSE, echo=FALSE}
@@ -622,7 +624,7 @@ wilcox.test(grouped_data_keyboard$dynamicRange, grouped_data_slider$dynamicRange
 The non-parametric test tells us there is no statistically significant difference (it even warnings us about the similarity of the observations)
 
 We will try in any way running a 1-way repeated measure ANOVA so let's check the assumption of normality for the residuals
-```{r echo=FALS}
+```{r echo=FALSE}
 a1 <- aov_ez("participant", "dynamicRange", grouped_data,
              between = NULL,
              within = c("condition"),
